@@ -3,6 +3,8 @@ import Link from "next/link";
 import SkillPage from "@/components/SkillPage";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 export default async function ReadingPage() {
   const tests = await prisma.test.findMany({ where: { skill: "READING" }, orderBy: { title: "asc" } });
 
