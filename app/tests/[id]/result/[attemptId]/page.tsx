@@ -49,7 +49,7 @@ export default async function ResultPage({ params }: { params: { id: string; att
                 <span className="font-mono text-slate mr-2">{a.question.order}.</span>{a.question.prompt}
               </p>
               <p className="text-slate">
-                Your answer: <span className="text-ink">{a.response || "—"}</span>
+                Your answer: <span className="text-ink">{formatResponse(a.response)}</span>
                 {!a.isCorrect && (
                   <>
                     {" · "}Correct: <span className="text-green">{formatCorrectAnswer(a.question.correctAnswer)}</span>
@@ -69,6 +69,12 @@ export default async function ResultPage({ params }: { params: { id: string; att
 }
 
 function formatCorrectAnswer(value: unknown): string {
+  if (Array.isArray(value)) return String(value[0]);
+  return String(value);
+}
+
+function formatResponse(value: unknown): string {
+  if (value === null || value === undefined || value === "") return "—";
   if (Array.isArray(value)) return String(value[0]);
   return String(value);
 }
