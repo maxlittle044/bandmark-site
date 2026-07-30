@@ -11,6 +11,7 @@ const config: Config = {
         amberdeep: "#C98A1E",
         green: "#2E7D5B",
         slate: "#5B6472",
+        ink: "#1A1F2B",
       },
       fontFamily: {
         display: ["Space Grotesk", "sans-serif"],

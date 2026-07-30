@@ -1,44 +1,58 @@
-# Bandmark — website (no backend)
+# Bandmark — full functionality (Reading & Listening)
 
-A static, multi-page marketing site. No database, no auth, no API routes — every
-page is content-only. Swap this for the full app scaffold later if you want the
-actual test-taking product; this is just the front door.
+Real accounts, a real database, and working auto-scored Reading & Listening tests.
+Writing/Speaking AI grading, streaks, and leaderboards aren't built yet — this pass
+covers the two auto-scorable skills end to end.
 
 ## Stack
-Next.js 14 (App Router, TypeScript) + Tailwind CSS + lucide-react icons.
+Next.js 14 (App Router, TypeScript) + Tailwind + PostgreSQL/Prisma + NextAuth
+(credentials + JWT sessions, no external OAuth needed to start).
 
-## Pages
-| Route | Content |
-|---|---|
-| `/` | Homepage |
-| `/practice` | Overview linking to all four skills |
-| `/practice/reading` | Reading format, sample question, tips |
-| `/practice/listening` | Listening format, sample question, tips |
-| `/practice/writing` | Writing format, sample prompt, tips |
-| `/practice/speaking` | Speaking format, sample cue card, tips |
-| `/pricing` | Free vs Premium comparison + FAQ |
-| `/about` | Positioning / mission |
-| `/contact` | Contact form (client-side only — see note below) |
-
-## Structure
-- `components/Nav.tsx`, `components/Footer.tsx` — shared chrome, rendered once in `app/layout.tsx`
-- `components/SkillPage.tsx` — one template reused by all four `/practice/[skill]` pages,
-  each passing its own data object (stats, question types, sample, tips)
-- `tailwind.config.ts` — design tokens: colors (`navy`, `paper`, `amber`, `amberdeep`,
-  `green`, `slate`) and fonts (`display` = Space Grotesk, `body` = Inter, `mono` = IBM Plex Mono)
+## What actually works
+- **Sign up / log in** — real accounts, hashed passwords (bcrypt), sessions via NextAuth.
+- **Reading test** — 2 original passages, 10 questions (multiple choice, True/False/Not
+  Given, sentence completion), timed, auto-scored on submit.
+- **Listening test** — 2 sections, 10 questions. Audio is generated client-side with the
+  browser's built-in text-to-speech (`SpeechSynthesisUtterance`) reading the transcript
+  once — no audio files to host. Swap in real recordings later by adding an `audioUrl`
+  field and an `<audio>` element; the transcript stays for accessibility either way.
+- **Scoring** — server-side only (the client never receives `correctAnswer`). Raw score
+  is converted to a band using the standard published /40 approximation tables, scaled
+  to your question count. This is an estimate, not an official score — said as much on
+  the results page.
+- **Results page** — band score + full answer review (your answer vs. correct answer).
 
 ## Setup
 ```bash
 npm install
+cp .env.example .env
+```
+Then get a free Postgres database (Neon or Vercel Postgres both work — ~2 minutes),
+paste the connection string into `DATABASE_URL` in `.env`, and generate a
+`NEXTAUTH_SECRET` with `openssl rand -base64 32`.
+
+```bash
+npx prisma migrate dev --name init
+npm run db:seed      # loads the sample Reading & Listening tests
 npm run dev
 ```
 
-## Notes
-- The contact form only updates local state on submit (`app/contact/page.tsx`) — it
-  doesn't send anything yet. Wire it to an email service (Resend, Formspree) or your
-  own API route when you're ready.
-- The "Start free" / "Log in" buttons currently route to `/pricing` and `/contact` —
-  point them at real auth once you build it.
-- To add real tests, scoring, and accounts later, the earlier `bandmark-app` scaffold
-  (Prisma schema + Next.js API routes) is the natural next step — this site's pages
-  can move into that project largely as-is.
+Sign up at `/signup`, then go to `/practice/reading` or `/practice/listening` and hit
+Start on a test.
+
+## Deploying
+Push to the connected GitHub repo — if it's already imported into Vercel, this
+redeploys automatically. Add `DATABASE_URL` and `NEXTAUTH_SECRET` (and
+`NEXTAUTH_URL` = your production URL) as Environment Variables in the Vercel
+project settings first, then run migrate + seed once against that same
+`DATABASE_URL` from your machine.
+
+## Data model
+`User → Attempt → Test → Section → Question → Answer`. See `prisma/schema.prisma`.
+`Attempt` stores `rawScore`, `totalQuestions`, and `band` once submitted.
+
+## Next pieces (not built yet)
+- Writing: essay editor + an LLM call graded against the four IELTS Writing criteria.
+- Speaking: audio recording/upload + transcription + the same LLM-grading pattern.
+- Streaks, XP, and a leaderboard view over `Attempt` history.
+- Swap Listening TTS for real recordings once you have licensed/original audio.

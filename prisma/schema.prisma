@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String    @id @default(cuid())
+  name         String
+  email        String    @unique
+  passwordHash String
+  createdAt    DateTime  @default(now())
+  attempts     Attempt[]
+}
+
+enum Skill {
+  READING
+  LISTENING
+}
+
+model Test {
+  id          String    @id @default(cuid())
+  skill       Skill
+  title       String
+  source      String?
+  durationMin Int
+  sections    Section[]
+  attempts    Attempt[]
+}
+
+model Section {
+  id             String     @id @default(cuid())
+  testId         String
+  test           Test       @relation(fields: [testId], references: [id])
+  order          Int
+  passageText    String?    // Reading passage
+  transcriptText String?    // Listening transcript, read aloud client-side
+  questions      Question[]
+}
+
+// type: "multiple_choice" | "true_false_not_given" | "sentence_completion"
+// options: for multiple_choice, an array of choice strings
+// correctAnswer: string (exact match, case-insensitive/trimmed) or array for MCQ index-as-string
+model Question {
+  id            String   @id @default(cuid())
+  sectionId     String
+  section       Section  @relation(fields: [sectionId], references: [id])
+  order         Int
+  type          String
+  prompt        String
+  options       Json?
+  correctAnswer Json
+  answers       Answer[]
+}
+
+enum AttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+}
+
+model Attempt {
+  id             String        @id @default(cuid())
+  userId         String
+  user           User          @relation(fields: [userId], references: [id])
+  testId         String
+  test           Test          @relation(fields: [testId], references: [id])
+  startedAt      DateTime      @default(now())
+  submittedAt    DateTime?
+  rawScore       Int?
+  totalQuestions Int?
+  band           Float?
+  status         AttemptStatus @default(IN_PROGRESS)
+  answers        Answer[]
+}
+
+model Answer {
+  id         String   @id @default(cuid())
+  attemptId  String
+  attempt    Attempt  @relation(fields: [attemptId], references: [id])
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id])
+  response   Json
+  isCorrect  Boolean
+}
