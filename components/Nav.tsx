@@ -20,6 +20,9 @@ export default function Nav() {
           <Link href="/pricing" className="hover:text-navy">Pricing</Link>
           <Link href="/about" className="hover:text-navy">About</Link>
           <Link href="/contact" className="hover:text-navy">Contact</Link>
+          {(session?.user as { role?: string } | undefined)?.role === "ADMIN" && (
+            <Link href="/admin" className="hover:text-navy">Admin</Link>
+          )}
         </nav>
         <div className="flex items-center gap-4">
           {status === "authenticated" ? (

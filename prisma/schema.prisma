@@ -8,11 +8,17 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+enum Role {
+  STUDENT
+  ADMIN
+}
+
 model User {
   id           String    @id @default(cuid())
   name         String
   email        String    @unique
   passwordHash String
+  role         Role      @default(STUDENT)
   createdAt    DateTime  @default(now())
   attempts     Attempt[]
 }
